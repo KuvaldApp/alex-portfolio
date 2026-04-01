@@ -132,8 +132,8 @@ nav.scrolled {
 
 .video-wrap { position:relative;display:inline-block; }
 .video-frame { position:relative;background:#1a1a18;border-radius:12px;overflow:hidden;aspect-ratio:9/16;width:240px;border:1px solid #222;box-shadow:0 40px 80px rgba(0,0,0,.5); }
-.video-frame video { width:100%;height:100%;object-fit:cover;display:block; }
-.video-placeholder { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:linear-gradient(160deg,#1e1e1c 0%,#0f0f0e 100%); }
+.video-frame video { width:100%;height:100%;object-fit:cover;display:block;position:relative;z-index:1; }
+.video-placeholder { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:linear-gradient(160deg,#1e1e1c 0%,#0f0f0e 100%);z-index:2; }
 .video-play-btn { width:60px;height:60px;border:1.5px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,transform .2s; }
 .video-play-btn:hover { background:var(--gold);transform:scale(1.08); }
 .video-play-btn svg { width:20px;height:20px;fill:var(--gold);margin-left:3px;transition:fill .2s; }
@@ -345,9 +345,15 @@ footer { background:#0a0a09;padding:36px 60px;display:flex;justify-content:space
       </p>
       <div class="video-wrap">
         <div class="video-frame" id="videoFrame">
-          <video id="adVideo" loop playsinline autoplay muted>
+          <video id="adVideo" loop playsinline autoplay muted defaultMuted>
             <source src="fifi-spa-ad.mp4" type="video/mp4">
           </video>
+          <div class="video-placeholder" id="videoPlaceholder">
+            <div class="video-play-btn" id="playBtn">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <span class="video-placeholder-label">Fifi Spa Relax<br>Pet Product Ad</span>
+          </div>
         </div>
         <div class="video-badge">$95k scaled</div>
       </div>
@@ -537,16 +543,29 @@ var cobs = new IntersectionObserver(function(entries) {
 }, { threshold: 0.5 });
 document.querySelectorAll('.count-up').forEach(function(el) { cobs.observe(el); });
 
-// Video play button
+// Video — try autoplay, fall back to click-to-play
+var adVideo = document.getElementById('adVideo');
+var placeholder = document.getElementById('videoPlaceholder');
 var playBtn = document.getElementById('playBtn');
+
+if (adVideo) {
+  adVideo.muted = true;
+  var playPromise = adVideo.play();
+  if (playPromise !== undefined) {
+    playPromise.then(function() {
+      if (placeholder) placeholder.style.display = 'none';
+    }).catch(function() {
+      if (placeholder) placeholder.style.display = 'flex';
+    });
+  }
+}
+
 if (playBtn) {
   playBtn.addEventListener('click', function() {
-    var video = document.getElementById('adVideo');
-    var placeholder = document.getElementById('videoPlaceholder');
-    if (video && placeholder) {
-      placeholder.style.display = 'none';
-      video.style.display = 'block';
-      video.play();
+    if (adVideo) {
+      adVideo.muted = true;
+      adVideo.play();
+      if (placeholder) placeholder.style.display = 'none';
     }
   });
 }
